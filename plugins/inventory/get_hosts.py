@@ -260,7 +260,8 @@ class InventoryModule(BaseInventoryPlugin):
                 for hostgroup in host["ansible_groups"]:
                     self.inventory.add_host(host["ansible_host"], group=hostgroup)
             for var_key, var_val in host.items():
-                self.inventory.set_variable(host["ansible_host"], var_key, var_val)
+                if var_key != "ansible_groups":
+                    self.inventory.set_variable(host["ansible_host"], var_key, var_val)
         '''
         groups = ['testa', 'testb']
         raw_data = self._get_raw_host_data()
