@@ -287,3 +287,8 @@ class InventoryModule(BaseInventoryPlugin):
 #inventory = InventoryModule._get_crowdstrike_hosts(None)
 #print(inventory["groups"])
 #print(len(inventory["hosts"]))
+
+#uncomment to write data to file for examination, requires "import json"
+#f = open("inventory_data.json", "a")
+#f.write(json.dumps(_get_crowdstrike_hosts(None)))
+#f.close()
