@@ -25,3 +25,4 @@ python3 plugins/inventory/get_hosts.py
 * Improve error handling using ansible.errors error handler. Ex: https://termlen0.github.io/2019/11/16/observations/
 * Improve documentation
 * Publish to Ansible Galaxy
+* Enable caching https://docs.ansible.com/ansible/latest/dev_guide/developing_inventory.html#inventory-cache
