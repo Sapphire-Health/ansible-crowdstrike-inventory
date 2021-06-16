@@ -2,6 +2,9 @@ from ansible.plugins.inventory import BaseInventoryPlugin
 import requests
 import os
 
+#source
+#https://developers.redhat.com/blog/2021/03/10/write-your-own-red-hat-ansible-tower-inventory-plugin#making_the_plugin_work_in_ansible_tower
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.0.0',
     'status': ['preview'],
@@ -208,13 +211,15 @@ class InventoryModule(BaseInventoryPlugin):
                                     if device[key] != None:
                                         if isinstance(device[key], list):
                                             for subkey in device[key]:
-                                                device["ansible_groups"].append(key + '-' + subkey.replace("/", "-"))
-                                                if key + '-' + subkey.replace("/", "-") not in inventory['groups']:
-                                                    inventory['groups'].append(key + '-' + subkey.replace("/", "-"))
+                                                value = subkey.replace("/", "_").replace("-", "_")
+                                                device["ansible_groups"].append(key + '_' + value)
+                                                if key + '_' + value not in inventory['groups']:
+                                                    inventory['groups'].append(key + '_' + value)
                                         else:
-                                            device["ansible_groups"].append(key + '-' + device[key])
-                                            if key + '-' + device[key] not in inventory['groups']:
-                                                inventory['groups'].append(key + '-' + device[key])
+                                            value = device[key].replace("/", "_").replace("-", "_")
+                                            device["ansible_groups"].append(key + '_' + value)
+                                            if key + '_' + value not in inventory['groups']:
+                                                inventory['groups'].append(key + '_' + value)
                             #print(host_groups)
                         #break
                 else:
@@ -275,3 +280,10 @@ class InventoryModule(BaseInventoryPlugin):
                 for var_key, var_val in _meta['hostvars'][host_name].items():
                     self.inventory.set_variable(host_name, var_key, var_val)
         '''
+
+#Set environment variables and uncomment last 3 lines to test
+#export CSCLIENTID=clientid
+#export CSCLIENTSECRET=secret
+#inventory = InventoryModule._get_crowdstrike_hosts(None)
+#print(inventory["groups"])
+#print(len(inventory["hosts"]))
