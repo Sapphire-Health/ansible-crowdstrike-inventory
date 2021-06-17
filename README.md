@@ -3,13 +3,15 @@
 ```
 #Rough notes
 cd ~/inventory/sapphire/crowdstrike
+rm -f build/sapphire-crowdstrike-1.0.1.tar.gz
 ansible-galaxy collection build -f --output-path build
 rm -Rf ~/.ansible/collections/ansible_collections/sapphire
-ansible-galaxy collection install build/sapphire-crowdstrike-1.0.0.tar.gz
+ansible-galaxy collection install build/sapphire-crowdstrike-1.0.1.tar.gz
 #tar.gz file needs to be uploaded to GitHub as a release
 ansible-doc -t inventory sapphire.crowdstrike.get_hosts
 #ansible-doc -t inventory -l
-ansible-inventory --list -i inventory.yml
+#ansible-inventory --list -i inventory.yml
+ansible-inventory --list -i inventory.yml > test.txt
 
 
 ansible-galaxy collection install -r collections/requirements.yml
