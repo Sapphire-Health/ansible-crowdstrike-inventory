@@ -21,6 +21,7 @@ python3 plugins/inventory/get_hosts.py
 - https://developers.redhat.com/blog/2021/03/10/write-your-own-red-hat-ansible-tower-inventory-plugin
 
 ### To do:
+* Update Crowdstrike remote command script to use the inventory and run commands on a group of hosts
 * Allow inventory.yml configuration to dynamically specify host variables to be used as groups
 * Improve error handling using ansible.errors error handler. Ex: https://termlen0.github.io/2019/11/16/observations/
 * Improve documentation
