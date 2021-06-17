@@ -1,6 +1,7 @@
 from ansible.plugins.inventory import BaseInventoryPlugin
 import requests
 import os
+#import json
 
 #source
 #https://developers.redhat.com/blog/2021/03/10/write-your-own-red-hat-ansible-tower-inventory-plugin#making_the_plugin_work_in_ansible_tower
@@ -259,9 +260,8 @@ class InventoryModule(BaseInventoryPlugin):
         for group in inventory["groups"]:
             self.inventory.add_group(group)
         for host in inventory["hosts"]:
-            if len(host["ansible_groups"]) == 0:
-                self.inventory.add_host(host["ansible_host"])
-            else:    
+            self.inventory.add_host(host["ansible_host"])
+            if len(host["ansible_groups"]) > 0:
                 for hostgroup in host["ansible_groups"]:
                     self.inventory.add_host(host["ansible_host"], group=hostgroup)
             for var_key, var_val in host.items():
@@ -290,5 +290,5 @@ class InventoryModule(BaseInventoryPlugin):
 
 #uncomment to write data to file for examination, requires "import json"
 #f = open("inventory_data.json", "a")
-#f.write(json.dumps(_get_crowdstrike_hosts(None)))
+#f.write(json.dumps(inventory))
 #f.close()
