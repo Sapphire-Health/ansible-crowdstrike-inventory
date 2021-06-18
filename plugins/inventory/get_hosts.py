@@ -212,21 +212,21 @@ class InventoryModule(BaseInventoryPlugin):
                                 'ou': ou,
                                 'ansible_groups': []
                             }
-                            if resource["hostname"].lower() in inventory["hosts"]:
-                                existing = datetime.strptime(inventory["hosts"][resource["hostname"].lower()]["last_seen"], '%Y-%m-%dT%H:%M:%SZ')
+                            if ansible_host in inventory["hosts"]:
+                                existing = datetime.strptime(inventory["hosts"][ansible_host]["last_seen"], '%Y-%m-%dT%H:%M:%SZ')
                                 duplicate = datetime.strptime(device["last_seen"], '%Y-%m-%dT%H:%M:%SZ')
                                 #print(existing)
                                 #print(duplicate)
                                 if existing > duplicate:
                                     #print("existing is newer than duplicate")
-                                    inventory["duplicates"][resource["hostname"].lower()] = device
+                                    inventory["duplicates"][ansible_host] = device
                                 else:
                                     #print("existing is older than duplicate")
                                     #print("using " + device["last_seen"])
-                                    inventory["duplicates"][resource["hostname"].lower()] = inventory["hosts"][resource["hostname"].lower()]
-                                    inventory["hosts"][resource["hostname"].lower()] = device
+                                    inventory["duplicates"][ansible_host] = inventory["hosts"][ansible_host]
+                                    inventory["hosts"][ansible_host] = device
                             else:
-                                inventory["hosts"][resource["hostname"].lower()] = device
+                                inventory["hosts"][ansible_host] = device
                                 for key in device.keys():
                                     #print(key)
                                     if key != 'ansible_groups' and key in group_by:
