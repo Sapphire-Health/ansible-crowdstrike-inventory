@@ -3,7 +3,6 @@ from datetime import datetime
 import requests
 import os
 #import json
-#import os.path
 #from os import path
 
 #source
@@ -89,6 +88,12 @@ class InventoryModule(BaseInventoryPlugin):
 
         url = 'https://api.crowdstrike.com/oauth2/token'
 
+        inventory = {
+            'groups': [],
+            'hosts': {},
+            'duplicates': {}
+        }
+
         body = {
             'client_id': os.getenv("CSCLIENTID"),
             'client_secret': os.getenv("CSCLIENTSECRET")
@@ -112,11 +117,6 @@ class InventoryModule(BaseInventoryPlugin):
 
         max = 1000
         device_ids = []
-        inventory = {
-            'groups': [],
-            'hosts': {},
-            'duplicates': {}
-        }
 
         group_by = self.GROUPS
 
@@ -236,29 +236,47 @@ class InventoryModule(BaseInventoryPlugin):
                                 #print(duplicate)
                                 if existing > duplicate:
                                     #print("existing is newer than duplicate")
-                                    inventory["duplicates"][ansible_host] = device
+                                    #print(device)
+                                    #self._add_duplicate(self, device)
+                                    #inventory["duplicates"][ansible_host] = device
+                                    dupindex = 0
+                                    keeplooking = True
+                                    while keeplooking:
+                                        dedupename = ansible_host + "." + str(dupindex)
+                                        if dedupename in inventory["duplicates"]:
+                                            dupindex = dupindex + 1
+                                        else:
+                                            keeplooking = False
+                                            inventory["duplicates"][dedupename] = device
+                                            inventory["duplicates"][dedupename]["ansible_host"] = dedupename
                                 else:
-                                    #print("existing is older than duplicate")
-                                    #print("using " + device["last_seen"])
-                                    inventory["duplicates"][ansible_host] = inventory["hosts"][ansible_host]
-                                    inventory["hosts"][ansible_host] = device
-                            else:
-                                inventory["hosts"][ansible_host] = device
-                                for key in device.keys():
-                                    #print(key)
-                                    if key != 'ansible_groups' and key in group_by:
-                                        if device[key] != None:
-                                            if isinstance(device[key], list):
-                                                for subkey in device[key]:
-                                                    value = to_safe_group_name(subkey)
-                                                    device["ansible_groups"].append(key + '_' + value)
-                                                    if key + '_' + value not in inventory['groups']:
-                                                        inventory['groups'].append(key + '_' + value)
-                                            else:
-                                                value =  to_safe_group_name(device[key])
+                                    dupindex = 0
+                                    keeplooking = True
+                                    while keeplooking:
+                                        dedupename = ansible_host + "." + str(dupindex)
+                                        #print(ansible_host + "." + str(dupindex))
+                                        if dedupename in inventory["duplicates"]:
+                                            dupindex = dupindex + 1
+                                        else:
+                                            keeplooking = False
+                                            inventory["duplicates"][dedupename] = inventory["hosts"][ansible_host]
+                                            inventory["duplicates"][dedupename]["ansible_host"] = dedupename
+                            inventory["hosts"][ansible_host] = device
+                            for key in device.keys():
+                                #print(key)
+                                if key != 'ansible_groups' and key in group_by:
+                                    if device[key] != None:
+                                        if isinstance(device[key], list):
+                                            for subkey in device[key]:
+                                                value = to_safe_group_name(subkey)
                                                 device["ansible_groups"].append(key + '_' + value)
                                                 if key + '_' + value not in inventory['groups']:
                                                     inventory['groups'].append(key + '_' + value)
+                                        else:
+                                            value =  to_safe_group_name(device[key])
+                                            device["ansible_groups"].append(key + '_' + value)
+                                            if key + '_' + value not in inventory['groups']:
+                                                inventory['groups'].append(key + '_' + value)
                             #print(host_groups)
                         #break
                 else:
@@ -322,7 +340,8 @@ class InventoryModule(BaseInventoryPlugin):
 #Set environment variables and uncomment last 3 lines to test
 #export CSCLIENTID=clientid
 #export CSCLIENTSECRET=secret
-#inventory = InventoryModule._get_crowdstrike_hosts(None)
+#inventorymodule = InventoryModule
+#inventory = inventorymodule._get_crowdstrike_hosts(inventorymodule)
 #print(inventory["groups"])
 #print(len(inventory["hosts"].keys()))
 #print(len(inventory["duplicates"].keys()))
