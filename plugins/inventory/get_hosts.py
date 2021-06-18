@@ -3,6 +3,8 @@ from datetime import datetime
 import requests
 import os
 #import json
+#import os.path
+#from os import path
 
 #source
 #https://developers.redhat.com/blog/2021/03/10/write-your-own-red-hat-ansible-tower-inventory-plugin#making_the_plugin_work_in_ansible_tower
@@ -27,6 +29,11 @@ options:
       - Whether the plugin should only return duplicate (stale) inventory items
     required: false
     type: bool
+  group_by:
+    description:
+      - List of properties to use as Ansible groups
+    required: false
+    type: list
 author:
   - Lyas Spiehler
 '''
@@ -34,6 +41,8 @@ author:
 
 class InventoryModule(BaseInventoryPlugin):
     """An example inventory plugin."""
+
+    GROUPS = []
 
     NAME = 'sapphire.crowdstrike.get_hosts'
 
@@ -73,6 +82,11 @@ class InventoryModule(BaseInventoryPlugin):
     
     def _get_crowdstrike_hosts(self):
 
+        #if path.exists("cache.json"):
+            #print("Using cache")
+        #    fcache = open("cache.json", "r")
+        #    return json.loads(fcache.read())
+
         url = 'https://api.crowdstrike.com/oauth2/token'
 
         body = {
@@ -103,7 +117,8 @@ class InventoryModule(BaseInventoryPlugin):
             'hosts': {},
             'duplicates': {}
         }
-        group_by = ['site_name', 'tags']
+
+        group_by = self.GROUPS
 
         url = 'https://api.crowdstrike.com/devices/queries/devices-scroll/v1?limit=' + str(max)
 
@@ -186,6 +201,7 @@ class InventoryModule(BaseInventoryPlugin):
                             site_name = None
                             if "site_name" in resource.keys():
                                 site_name = resource["site_name"]
+                            hostname =  resource["hostname"].lower()
                             machine_domain = None
                             ansible_host = None
                             if "machine_domain" in resource.keys():
@@ -197,6 +213,7 @@ class InventoryModule(BaseInventoryPlugin):
                                 'device_id': resource["device_id"],
                                 'cid': resource["cid"],
                                 'ansible_host': ansible_host,
+                                'hostname': hostname,
                                 'domain': machine_domain,
                                 'os': resource["os_version"],
                                 'site_name': site_name,
@@ -248,21 +265,20 @@ class InventoryModule(BaseInventoryPlugin):
                     print("Error: Returned http status code " + str(response.status_code)) 
             index = index + 1
             #print(index)
-                
-        #send last bit if remaining
-        #for key in host_groups.keys():
-        #    print(key)
-        #    print(len(host_groups[key]))
-        #print(inventory["groups"])
-        #print(len(inventory["hosts"]))
+        #cache data for testing        
+        #f = open("cache.json", "a")
+        #f.write(json.dumps(inventory))
+        #f.close()
         return inventory
-
-    group = ['test1', 'test2']
 
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path)
         self._read_config_data(path)
         duplicates = self.get_option("duplicates")
+        group_by = self.get_option("group_by")
+        if group_by:
+            self.GROUPS = group_by
+        #print(self.GROUPS)
         """Parse and populate the inventory with data about hosts.
 
         Parameters:
@@ -281,14 +297,14 @@ class InventoryModule(BaseInventoryPlugin):
         for group in inventory["groups"]:
             self.inventory.add_group(group)
         for hostkey in inventory[inventorytype].keys():
-            invhost = self.inventory.add_host(inventory[inventorytype][hostkey]["ansible_host"])
-            #self.inventory.add_host(invhost, group='all')
+            self.inventory.add_host(inventory[inventorytype][hostkey]["ansible_host"])
+            #self.inventory.add_host(inventory[inventorytype][hostkey]["ansible_host"], group='all')
             if len(inventory[inventorytype][hostkey]["ansible_groups"]) > 0:
                 for hostgroup in inventory[inventorytype][hostkey]["ansible_groups"]:
-                    self.inventory.add_host(invhost, group=hostgroup)
+                    self.inventory.add_host(inventory[inventorytype][hostkey]["ansible_host"], group=hostgroup)
             for var_key, var_val in inventory[inventorytype][hostkey].items():
                 if var_key != "ansible_groups":
-                    self.inventory.set_variable(invhost, var_key, var_val)
+                    self.inventory.set_variable(inventory[inventorytype][hostkey]["ansible_host"], var_key, var_val)
         '''
         groups = ['testa', 'testb']
         raw_data = self._get_raw_host_data()
